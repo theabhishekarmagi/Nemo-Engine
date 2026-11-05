@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Modified for Nemo-Engine by MAGI ABHISHEKAR (theabhishekarmagi), 2026-11-05. -->
 <resources>
     <string name="chat_greeting_morning">Buenos días</string>
     <string name="chat_greeting_noon">Buen mediodía</string>
@@ -6,12 +7,12 @@
     <string name="chat_greeting_evening">Buenas noches</string>
     <string name="chat_greeting_night">Despierto hasta tarde</string>
     <string name="chat_empty_prompt">¿Qué debería hacer Mika?</string>
-    <string name="chat_example_message">Abre WeChat y escribe a Wang Zan para que me añada al grupo beta de Mika</string>
-    <string name="chat_example_group_summary">Resume de qué habló hoy el grupo beta de Mika en WeChat</string>
+    <string name="chat_example_message">Open Google Maps and find nearby coffee shops</string>
+    <string name="chat_example_group_summary">Find nearby pizza places—my fridge has officially given up on me</string>
     <string name="chat_example_jobs">Postula a 150 empleos de gestor de producto de IA en BOSS Zhipin</string>
-    <string name="chat_example_music">Abre Qishui Music y mira anuncios para conseguir 24 horas de VIP</string>
+    <string name="chat_example_music">Open Spotify and play some relaxing music</string>
     <string name="chat_example_alarms">Pon alarmas mañana por la mañana a las 9:40, 9:50 y 10:00</string>
-    <string name="chat_example_creator">Abre Xiaohongshu y resume las publicaciones del creador 王赞不赞</string>
+    <string name="chat_example_creator">Open YouTube and summarize the latest videos from Google</string>
     <string name="chat_working_on">Trabajando en %1$s</string>
     <string name="chat_working">Trabajando</string>
     <string name="chat_wait_previous_task">Empieza cuando termine la tarea anterior</string>

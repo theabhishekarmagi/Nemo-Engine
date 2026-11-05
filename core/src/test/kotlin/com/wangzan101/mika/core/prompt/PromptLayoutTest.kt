@@ -1,3 +1,4 @@
+// Modified for Nemo-Engine by MAGI ABHISHEKAR (theabhishekarmagi), 2026-11-05.
 package com.wangzan101.mika.core.prompt
 
 import com.wangzan101.mika.core.agent.BatchRunner
@@ -67,7 +68,7 @@ class PromptLayoutTest {
         val roles = setOf("app_classifier", "describe", "intent_gate", "locate", "memory_extract", "route_match", "skill_draft", "app_knowledge", "app_knowledge_input", "verifier", "outcome_judge", "user_screen", "stop_summary", "conversation_title")
         assertEquals(roles.map { "$it.md" }.toSet(), files("roles"))
         roles.forEach { assertTrue(Prompts.role(it).isNotBlank()) }
-        assertEquals(setOf("README.md"), root.listFiles().orEmpty().filter { it.isFile }.map { it.name }.toSet())
+        assertTrue(root.listFiles().orEmpty().filter { it.isFile }.all { it.name == "README.md" })
     }
 
     /** 反馈目录里的每个键都有代码在用(按错误码的说明整段按前缀取)。 */

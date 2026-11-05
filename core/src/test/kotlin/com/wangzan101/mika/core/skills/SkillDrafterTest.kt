@@ -1,3 +1,4 @@
+// Modified for Nemo-Engine by MAGI ABHISHEKAR (theabhishekarmagi), 2026-11-05.
 package com.wangzan101.mika.core.skills
 
 import com.wangzan101.mika.core.agent.FakeModel
@@ -24,7 +25,7 @@ class SkillDrafterTest {
     private val answer = "已给老妈发了「明天回家吃饭」,聊天里显示已发送"
     private val tools = setOf("phone_launch_app", "phone_observe", "phone_tap", "phone_type_text", "phone_back", "finish", "hand_to_user")
 
-    private val observeJson = """{"ok":true,"currentApp":"com.tencent.mm","snapshotId":"s1","elements":[""" +
+    private val observeJson = """{"ok":true,"currentApp":"com.whatsapp","snapshotId":"s1","elements":[""" +
         """{"ref":"@e1","role":"button","name":"搜索","center":{"x":1,"y":1}},""" +
         """{"ref":"@e2","role":"text","name":"张三:晚上一起吃饭吗","center":{"x":1,"y":1}},""" +
         """{"ref":"@e3","role":"item","name":"老妈","center":{"x":1,"y":1}}]}"""
@@ -41,10 +42,10 @@ class SkillDrafterTest {
             ev += RunEvent.ModelReply(++t, step, "", tool, args, null, null, null)
             ev += RunEvent.ToolResult(++t, step, tool, result, changed, null)
         }
-        act(1, "phone_launch_app", """{"package":"com.tencent.mm"}""")
+        act(1, "phone_launch_app", """{"package":"com.whatsapp"}""")
         ev += RunEvent.ModelReply(++t, 2, "", "phone_observe", "{}", null, null, null)
         ev += RunEvent.ToolResult(++t, 2, "phone_observe", observeJson, null, 1)
-        ev += com.wangzan101.mika.core.testing.legacyScreenText(++t, 2, "com.tencent.mm", listOf("搜索", "张三:晚上一起吃饭吗", "老妈"))
+        ev += com.wangzan101.mika.core.testing.legacyScreenText(++t, 2, "com.whatsapp", listOf("搜索", "张三:晚上一起吃饭吗", "老妈"))
         val script = listOf(
             Triple("phone_tap", """{"ref":"@e1","snapshotId":"s1"}""", true),
             Triple("phone_type_text", """{"text":"老妈","ref":"@e1","snapshotId":"s1"}""", true),
@@ -60,21 +61,21 @@ class SkillDrafterTest {
     }
 
     private fun md(
-        name: String = "send-wechat-message",
-        description: String = "给指定联系人发一条微信消息",
-        apps: String = "com.tencent.mm",
+        name: String = "send-whatsapp-message",
+        description: String = "给指定联系人发一条WhatsApp消息",
+        apps: String = "com.whatsapp",
         body: String = "",
         drop: String? = null,
         updates: String? = null,
     ): String {
         val sections = listOf(
-            "## 入口" to "用 `phone_launch_app` 打开微信。",
+            "## 入口" to "用 `phone_launch_app` 打开WhatsApp。",
             "## 步骤" to "1. 点搜索,用 `phone_type_text` 输入 老妈\n2. 输入 明天回家吃饭 后点发送$body",
             "## 容易出错的地方" to "搜索结果里可能有同名群聊。",
             "## 怎样算办成(核实证据)" to "聊天里出现刚发的消息,没有红色感叹号。",
             "## 什么时候停下交给用户" to "需要登录时用 `hand_to_user`。",
         ).filter { it.first != drop }
-        return "---\nname: $name\ndisplay: 发微信消息\ndescription: $description\napps: [$apps]\n" + updates?.let { "updates: $it\n" }.orEmpty() + "source: learned\nlearned_from: r1\n---\n" +
+        return "---\nname: $name\ndisplay: 发WhatsApp消息\ndescription: $description\napps: [$apps]\n" + updates?.let { "updates: $it\n" }.orEmpty() + "source: learned\nlearned_from: r1\n---\n" +
             sections.joinToString("\n") { "${it.first}\n${it.second}" }
     }
 
@@ -95,7 +96,7 @@ class SkillDrafterTest {
         assertNull(Eligibility.check(runEvents(extra = listOf(RunEvent.Takeover(50, "login", "complete", 10, 3))), null, TOOLS, done = true))
         assertEquals("confirmation_declined", Eligibility.check(runEvents(extra = listOf(RunEvent.Confirmation(50, "send", null, null, null, "declined"))), null, TOOLS, done = true))
         assertNull(Eligibility.check(runEvents(extra = listOf(RunEvent.Confirmation(50, "send", null, null, null, "approved"))), null, TOOLS, done = true))
-        assertEquals("followed_personal_skill", Eligibility.check(runEvents(), "send-wechat-message", TOOLS, done = true))
+        assertEquals("followed_personal_skill", Eligibility.check(runEvents(), "send-whatsapp-message", TOOLS, done = true))
         assertEquals("takeover_user_finished", Eligibility.check(runEvents(extra = listOf(RunEvent.Takeover(50, "payment", "user_finished", 10, 4))), null, TOOLS, done = true))
         // 出错的动作不算步数
         val withErrors = runEvents().map { e ->
@@ -107,8 +108,8 @@ class SkillDrafterTest {
     @Test fun digestOmitsTypedTextAndScreens() {
         val lines = ActionDigest.of(runEvents(), TOOLS)
         assertEquals(listOf("phone_launch_app", "phone_tap", "phone_type_text", "phone_tap", "phone_type_text", "phone_tap"), lines.map { it.tool })
-        assertEquals(listOf("com.tencent.mm", "搜索", "搜索", "老妈", null, null), lines.map { it.target })
-        assertTrue(lines.all { it.where == "com.tencent.mm" })
+        assertEquals(listOf("com.whatsapp", "搜索", "搜索", "老妈", null, null), lines.map { it.target })
+        assertTrue(lines.all { it.where == "com.whatsapp" })
         assertEquals(false, lines.last().changed)
         val text = ActionDigest.render(lines)
         assertTrue(text.contains("<输入内容>"))
@@ -173,47 +174,47 @@ class SkillDrafterTest {
     // 起草时把已有的个人技能(连同待确认的草稿)列给模型,是不是同一类事由它判断
     @Test fun requestListsExistingSkillsAndDrafts() {
         val store = InMemoryPersonalSkills(personalSkill("zhihu-collections", display = "查看知乎收藏夹列表", description = "数知乎收藏夹", status = SkillStatus.suspended))
-        store.putPending("d0", personalSkill("wechat-msg", display = "微信消息", description = "发微信"))
+        store.putPending("d0", personalSkill("whatsapp-msg", display = "WhatsApp消息", description = "发WhatsApp"))
         val model = FakeModel(text(md()))
         draft(text(md()), existing = store, model = model)
         val request = model.requests.single().flatMap { it.parts }.filterIsInstance<Part.Text>().joinToString("\n") { it.text }
         assertTrue(request, request.contains("- zhihu-collections(查看知乎收藏夹列表):数知乎收藏夹"))
-        assertTrue(request, request.contains("- wechat-msg(微信消息):发微信"))
+        assertTrue(request, request.contains("- whatsapp-msg(WhatsApp消息):发WhatsApp"))
     }
 
     @Test fun modelMarkedUpdateOfExistingSkill() {
-        val mine = personalSkill("wechat-msg", display = "微信消息", status = SkillStatus.suspended)
-        val d = draft(text("```markdown\n" + md(updates = "wechat-msg") + "\n```"), existing = InMemoryPersonalSkills(mine)) as DraftResult.Draft
-        assertEquals("wechat-msg", d.isUpdateOf)
-        assertEquals("wechat-msg", d.skill.name)
-        assertEquals("wechat-msg", d.skill.replacesDraftOf)
+        val mine = personalSkill("whatsapp-msg", display = "WhatsApp消息", status = SkillStatus.suspended)
+        val d = draft(text("```markdown\n" + md(updates = "whatsapp-msg") + "\n```"), existing = InMemoryPersonalSkills(mine)) as DraftResult.Draft
+        assertEquals("whatsapp-msg", d.isUpdateOf)
+        assertEquals("whatsapp-msg", d.skill.name)
+        assertEquals("whatsapp-msg", d.skill.replacesDraftOf)
         assertEquals(PersonalSkills.fingerprint(mine.markdown), d.skill.baseHash)
         assertNull(d.replacesPending)
-        assertTrue(d.skill.markdown.startsWith("---\nname: wechat-msg\n"))
+        assertTrue(d.skill.markdown.startsWith("---\nname: whatsapp-msg\n"))
         assertFalse(d.skill.markdown.contains("updates:"))
     }
 
     // 指向不存在的技能(或内置技能)的 updates 不算数:当作新的一份
     @Test fun bogusUpdatesTreatedAsNew() {
-        val mine = personalSkill("wechat-msg", display = "微信消息")
+        val mine = personalSkill("whatsapp-msg", display = "WhatsApp消息")
         for (bogus in listOf("no-such-skill", "messaging")) {
             val d = draft(text(md(updates = bogus)), existing = InMemoryPersonalSkills(mine)) as DraftResult.Draft
             assertNull(d.isUpdateOf)
             assertNull(d.replacesPending)
-            assertEquals("send-wechat-message", d.skill.name)
+            assertEquals("send-whatsapp-message", d.skill.name)
             assertNull(d.skill.replacesDraftOf)
             assertFalse(d.skill.markdown.contains("updates:"))
         }
         // 没写 updates:名字再像也不替模型并进已有的
-        val d = draft(text(md()), existing = InMemoryPersonalSkills(personalSkill("wechat-msg", display = "微信消息", extraMeta = "apps: [com.tencent.mm]\n"))) as DraftResult.Draft
+        val d = draft(text(md()), existing = InMemoryPersonalSkills(personalSkill("whatsapp-msg", display = "WhatsApp消息", extraMeta = "apps: [com.whatsapp]\n"))) as DraftResult.Draft
         assertNull(d.isUpdateOf)
         // 新的一份不能占已有的名字
-        assertEquals(DraftResult.Dropped("name_taken"), draft(text(md(name = "wechat-msg", updates = "nope")), existing = InMemoryPersonalSkills(mine)))
+        assertEquals(DraftResult.Dropped("name_taken"), draft(text(md(name = "whatsapp-msg", updates = "nope")), existing = InMemoryPersonalSkills(mine)))
     }
 
     // 指向一份待确认的草稿:换掉那份草稿,不再堆一份
     @Test fun updatesPendingDraftReplacesIt() {
-        val store = InMemoryPersonalSkills(personalSkill("wechat-msg"))
+        val store = InMemoryPersonalSkills(personalSkill("whatsapp-msg"))
         store.putPending("d0", personalSkill("new-thing", display = "新事"))
         val d = draft(text(md(updates = "new-thing")), existing = store) as DraftResult.Draft
         assertEquals("d0", d.replacesPending)
@@ -221,19 +222,19 @@ class SkillDrafterTest {
         assertNull(d.isUpdateOf)
         assertNull(d.skill.replacesDraftOf)
         // 那份草稿本身是已有技能的更新:新草稿接着更新同一份
-        store.putPending("d1", personalSkill("wechat-msg").copy(replacesDraftOf = "wechat-msg"))
-        val u = draft(text(md(updates = "wechat-msg")), existing = store) as DraftResult.Draft
+        store.putPending("d1", personalSkill("whatsapp-msg").copy(replacesDraftOf = "whatsapp-msg"))
+        val u = draft(text(md(updates = "whatsapp-msg")), existing = store) as DraftResult.Draft
         assertEquals("d1", u.replacesPending)
-        assertEquals("wechat-msg", u.isUpdateOf)
-        assertEquals("wechat-msg", u.skill.replacesDraftOf)
-        assertEquals(PersonalSkills.fingerprint(store.get("wechat-msg")!!.markdown), u.skill.baseHash)
+        assertEquals("whatsapp-msg", u.isUpdateOf)
+        assertEquals("whatsapp-msg", u.skill.replacesDraftOf)
+        assertEquals(PersonalSkills.fingerprint(store.get("whatsapp-msg")!!.markdown), u.skill.baseHash)
     }
 
     @Test fun approveRewritesName() {
-        val store = InMemoryPersonalSkills(personalSkill("wechat-msg"))
-        store.putPending("d1", personalSkill("send-wechat-message").copy(replacesDraftOf = "wechat-msg"))
+        val store = InMemoryPersonalSkills(personalSkill("whatsapp-msg"))
+        store.putPending("d1", personalSkill("send-whatsapp-message").copy(replacesDraftOf = "whatsapp-msg"))
         val got = store.approve("d1", editedMarkdown = "---\nname: renamed-by-user\ndisplay: x\n---\n## 入口\n改过")!!
-        assertTrue(got.markdown.startsWith("---\nname: wechat-msg\n"))
+        assertTrue(got.markdown.startsWith("---\nname: whatsapp-msg\n"))
     }
 
     @Test fun sensitiveAfterRedactionDropsDraft() {
@@ -295,8 +296,8 @@ class SkillDrafterTest {
     }
 
     @Test fun invalidOrTakenNameDropped() {
-        assertEquals(DraftResult.Dropped("invalid_name"), draft(text(md(name = "Send_Wechat"))))
-        assertEquals(DraftResult.Dropped("name_taken"), draft(text(md(name = "wechat")))) // 与内置同名
+        assertEquals(DraftResult.Dropped("invalid_name"), draft(text(md(name = "Send_Whatsapp"))))
+        assertEquals(DraftResult.Dropped("name_taken"), draft(text(md(name = "whatsapp")))) // 与内置同名
     }
 
     @Test fun modelErrorDropped() {
@@ -314,7 +315,7 @@ class SkillDrafterTest {
             RunEvent.ToolResult(93, 11, "phone_observe", pageObserve, null, null),
             RunEvent.ModelReply(94, 12, "", "phone_tap", """{"ref":"@e1","snapshotId":"w1"}""", null, null, null),
             RunEvent.ToolResult(95, 12, "phone_tap", """{"ok":true}""", true, null),
-            RunEvent.ModelReply(96, 13, "", "phone_launch_app", """{"package":"com.tencent.mm"}""", null, null, null),
+            RunEvent.ModelReply(96, 13, "", "phone_launch_app", """{"package":"com.whatsapp"}""", null, null, null),
             RunEvent.ToolResult(97, 13, "phone_launch_app", """{"ok":true}""", true, null),
         )
         val lines = ActionDigest.of(runEvents(extra = web), TOOLS)
@@ -325,7 +326,7 @@ class SkillDrafterTest {
         assertEquals("网站 shop.example.com", tapOnPage.where)
         assertEquals("李四的订单 2024-001", tapOnPage.target)
         // 回到手机:又记在 App 下
-        assertEquals("com.tencent.mm", lines.single { it.step == 13 }.where)
+        assertEquals("com.whatsapp", lines.single { it.step == 13 }.where)
 
     }
 }

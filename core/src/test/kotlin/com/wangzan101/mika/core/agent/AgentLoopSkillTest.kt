@@ -1,3 +1,4 @@
+// Modified for Nemo-Engine by MAGI ABHISHEKAR (theabhishekarmagi), 2026-11-05.
 package com.wangzan101.mika.core.agent
 
 import com.wangzan101.mika.core.knowledge.GuideCatalog
@@ -50,7 +51,7 @@ class AgentLoopSkillTest {
         extraMeta = "aliases: [知乎收藏夹, 我的收藏, 收藏夹条数]\n")
 
     @Test fun knowledgeIndexStillByTaskWords() {
-        val r = run("用闲鱼查手机,再发微信给小王,再在知乎搜一下")
+        val r = run("用闲鱼查手机,再发WhatsApp给小王,再在知乎搜一下")
         val idx = r.requests.first().index().single()
         // 知识和技能各在自己的标题下(标题里写着用哪个工具读全文)
         assertTrue(idx.lines().first() == KNOWLEDGE_INDEX_HEADER && idx.lines().any { it.startsWith("- app:xianyu(闲鱼):") })
@@ -82,10 +83,10 @@ class AgentLoopSkillTest {
 
     // 开头只给索引,个人技能的全文要模型自己用 skill_read 读
     @Test fun noPersonalFullTextAtStart() {
-        val mine = personalSkill("lao-ma-msg", body = "## 入口\n打开微信找老妈", display = "给老妈发消息")
+        val mine = personalSkill("lao-ma-msg", body = "## 入口\n打开WhatsApp找老妈", display = "给老妈发消息")
         val r = run("给老妈发消息说晚点到", mine)
         val first = r.requests.first()
-        assertTrue(first.userTexts().none { "打开微信找老妈" in it })
+        assertTrue(first.userTexts().none { "打开WhatsApp找老妈" in it })
         assertTrue(first.userTexts().any { "- personal:lao-ma-msg(给老妈发消息):" in it })
         assertTrue(r.events.none { it is RunEvent.SkillUsed })
     }
@@ -93,7 +94,7 @@ class AgentLoopSkillTest {
     @Test fun skillReadOfPersonalRecordsSkillUsed() {
         val r = run("知乎上我一共建了几个收藏夹？", zhihu, personalSkill("my-trip", display = "我的出行"), script = listOf(
             reply(call("skill_read", """{"name":"zhihu-collections"}""")),
-            reply(call("knowledge_read", """{"name":"app:wechat"}""")), // 内置的不记
+            reply(call("knowledge_read", """{"name":"app:whatsapp"}""")), // 内置的不记
             finish,
         ))
         // 全文由 skill_read 的结果给出

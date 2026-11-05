@@ -1,3 +1,4 @@
+// Modified for Nemo-Engine by MAGI ABHISHEKAR (theabhishekarmagi), 2026-11-05.
 package com.wangzan101.mika.core.agent
 
 import com.wangzan101.mika.core.observation.Place
@@ -257,7 +258,7 @@ class ForegroundAddsNoSkillsIndexTest {
         val catalog = com.wangzan101.mika.core.knowledge.GuideCatalog.loadBundled()
         val store = com.wangzan101.mika.core.knowledge.KnowledgeStore(com.wangzan101.mika.core.knowledge.KnowledgeStore.loadBundled())
         val screen = object : com.wangzan101.mika.core.uistate.ScreenPort by FakeScreen() {
-            override suspend fun snapshot() = com.wangzan101.mika.core.uistate.ScreenSnapshot("s", "com.tencent.mm", emptyList(), 1080, 2400)
+            override suspend fun snapshot() = com.wangzan101.mika.core.uistate.ScreenSnapshot("s", "com.whatsapp", emptyList(), 1080, 2400)
         }
         fun tools(vararg c: Part.ToolCall) = ModelReply(c.toList(), StopReason.ToolUse, null)
         val m = FakeModel(tools(Part.ToolCall("o1", "phone_observe", "{}")), tools(Part.ToolCall("o2", "phone_observe", "{}")),
@@ -267,7 +268,7 @@ class ForegroundAddsNoSkillsIndexTest {
         val last = m.requests.last().filter { ContextBuilder.kindOf(it) == ContextKind.SkillsIndex }
         assertEquals(1, first.size)
         assertEquals(first, last)
-        // 微信的知识正文照样在进入时补上
+        // WhatsApp的知识正文照样在进入时补上
         assertTrue(m.requests.last().any { ContextBuilder.kindOf(it) == ContextKind.AppKnowledge })
         assertTrue(ContextBuilder.bodyOf(first.single())!!.contains("- skill:messaging("))
     }

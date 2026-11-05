@@ -3,7 +3,7 @@
 只输出一份 Markdown 文档,不要输出其他文字,格式如下:
 
 ---
-name: <小写英文和连字符,如 send-wechat-message>
+name: <小写英文和连字符,如 send-message>
 display: <简短中文名>
 description: <一句话:什么情况下用这份技能>
 apps: [<用到的 App 包名>]

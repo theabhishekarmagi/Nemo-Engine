@@ -1,3 +1,4 @@
+// Modified for Nemo-Engine by MAGI ABHISHEKAR (theabhishekarmagi), 2026-11-05.
 package com.wangzan101.mika.core.knowledge
 
 import com.wangzan101.mika.core.agent.KNOWLEDGE_BODY_LIMIT
@@ -23,7 +24,7 @@ class BundledKnowledgeTest {
     @Test fun bundledTreesPassValidationAndIndexIsCurrent() {
         val r = KnowledgeIndex.build(resources)
         assertTrue(r.errors.joinToString("\n"), r.errors.isEmpty())
-        assertEquals(mapOf("app" to 23, "site" to 18, "skill" to 6), r.entries.groupingBy { it.kind }.eachCount())
+        assertEquals(mapOf("app" to 22, "site" to 17, "skill" to 6), r.entries.groupingBy { it.kind }.eachCount())
         // 类路径上的索引就是按当前文件生成的那份
         assertEquals(r.entries, catalog.rows)
     }
@@ -35,7 +36,7 @@ class BundledKnowledgeTest {
 
     // App 的 pace 按包名查 App 知识:限制浏览快慢的那几个内置 App 是 careful,别的没有说法
     @Test fun appPaceFollowsTheAppKnowledgeByPackage() {
-        val careful = listOf("xiaohongshu", "wechat", "douyin", "kuaishou", "weibo", "boss-zhipin", "xianyu")
+        val careful = listOf("xiaohongshu", "douyin", "kuaishou", "weibo", "boss-zhipin", "xianyu")
         val apps = catalog.rows.filter { it.kind == KnowledgeIndex.APP }
         for (name in careful) {
             val row = apps.single { it.name == name }
@@ -46,9 +47,9 @@ class BundledKnowledgeTest {
     }
 
     @Test fun everyEntryHasABody() {
-        assertEquals(41, bundled.size)
+        assertEquals(39, bundled.size)
         assertTrue(bundled.all { !it.body.isNullOrBlank() && it.body!!.length <= KnowledgeIndex.BODY_LIMIT })
-        assertTrue(bundled.map { it.name }.containsAll(listOf("wechat", "xianyu", "android-settings", "zhihu.com", "weixin.sogou.com")))
+        assertTrue(bundled.map { it.name }.containsAll(listOf("whatsapp", "xianyu", "android-settings", "zhihu.com", "zhipin.com")))
     }
 
     @Test fun onlyDocumentsAndManifestListedScripts() {
@@ -62,7 +63,7 @@ class BundledKnowledgeTest {
     @Test fun aliasMapsToItsOwnPackage() {
         val store = KnowledgeStore(bundled)
         assertEquals("com.taobao.idlefish", store.packageFor("闲鱼"))
-        assertEquals("com.tencent.mm", store.packageFor("微信"))
+        assertEquals("com.whatsapp", store.packageFor("WhatsApp"))
     }
 
     @Test fun longBodyTruncatedWithHint() {
@@ -78,23 +79,23 @@ class BundledKnowledgeTest {
         val hits = catalog.find("发消息")
         assertTrue(hits.size <= 10)
         assertTrue(hits.any { it.kind == "skill" && it.name == "messaging" })
-        assertTrue(catalog.find("微信", kind = "app").all { it.kind == "app" })
-        assertTrue("wechat" in catalog.items.single { it.kind == "skill" && it.name == "messaging" }.apps)
+        assertTrue(catalog.find("WhatsApp", kind = "app").all { it.kind == "app" })
+        assertTrue("whatsapp" in catalog.items.single { it.kind == "skill" && it.name == "messaging" }.apps)
         assertTrue("zhihu.com" in catalog.items.single { it.kind == "skill" && it.name == "info-research" }.sites)
     }
 
     @Test fun skillViewReturnsAttachment() {
-        val v = catalog.view("site:weixin.sogou.com", "references/article-links.md") as GuideView.Found
-        assertEquals("references/article-links.md", v.file)
+        val v = catalog.view("site:zhipin.com", "references/joblist-fields.md") as GuideView.Found
+        assertEquals("references/joblist-fields.md", v.file)
         assertTrue(v.content.isNotBlank() && !v.truncated)
-        val app = catalog.view("wechat") as GuideView.Found
+        val app = catalog.view("whatsapp") as GuideView.Found
         assertEquals("APP.md", app.file)
-        assertTrue(app.content.contains("微信"))
+        assertTrue(app.content.contains("WhatsApp"))
         assertTrue(app.content.startsWith(UNAVAILABLE_TOOLS_NOTE + "\n"))
         assertFalse(app.content.contains("\n---\n"))
-        val site = catalog.view("site:weixin.sogou.com") as GuideView.Found
-        assertTrue("references/article-links.md" in site.info.files)
-        assertTrue((catalog.view("weixin.sogou.com", "references/article-links.md") as GuideView.Found).content.isNotBlank())
+        val site = catalog.view("site:zhipin.com") as GuideView.Found
+        assertTrue("references/joblist-fields.md" in site.info.files)
+        assertTrue((catalog.view("zhipin.com", "references/joblist-fields.md") as GuideView.Found).content.isNotBlank())
         assertEquals("SKILL.md", (catalog.view("skill:messaging") as GuideView.Found).file)
     }
 
@@ -112,12 +113,12 @@ class BundledKnowledgeTest {
 
     @Test fun skillViewUnknownIsError() {
         assertEquals("skill_not_found", (catalog.view("nope-nothing") as GuideView.Failed).error)
-        assertEquals("skill_not_found", (catalog.view("site:wechat") as GuideView.Failed).error)
-        assertEquals("file_not_found", (catalog.view("app:wechat", "../x.md") as GuideView.Failed).error)
+        assertEquals("skill_not_found", (catalog.view("site:whatsapp") as GuideView.Failed).error)
+        assertEquals("file_not_found", (catalog.view("app:whatsapp", "../x.md") as GuideView.Failed).error)
     }
 
     @Test fun skillsAreNeverInjectedByTaskMatch() {
-        val hit = KnowledgeStore(bundled).matchTask("帮我发微信", 10)
+        val hit = KnowledgeStore(bundled).matchTask("帮我发WhatsApp", 10)
         assertTrue(hit.all { e -> catalog.items.any { it.kind in setOf("app", "site") && it.name == e.name } })
     }
 }

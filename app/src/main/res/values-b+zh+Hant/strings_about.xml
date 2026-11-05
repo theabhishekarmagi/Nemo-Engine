@@ -26,7 +26,7 @@
     <string name="about_guide_sub">上手指南；不會寫程式碼也能補充 App 知識</string>
     <string name="about_data_note">你發給 Mika 的話、螢幕內容和截圖，只發給你自己設定的模型服務商。Mika 沒有自己的伺服器，不收集你的資料；檢查更新時只連線 GitHub。</string>
     <string name="about_license_link">Apache-2.0 開源許可</string>
-    <string name="about_author">由 王贊 開發 · © 2026</string>
+    <string name="about_author">Maintained by MAGI ABHISHEKAR · Updated 5 November 2026</string>
     <string name="about_license_title">Apache-2.0 授權條款</string>
     <string name="about_update_download">從 GitHub 下載</string>
     <string name="about_update_later">以後再說</string>

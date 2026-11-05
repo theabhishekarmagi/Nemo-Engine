@@ -1,3 +1,4 @@
+// Modified for Nemo-Engine by MAGI ABHISHEKAR (theabhishekarmagi), 2026-11-05.
 package com.wangzan101.mika.core.knowledge
 
 import org.junit.Assert.assertEquals
@@ -15,15 +16,15 @@ private fun entry(
 class KnowledgeStoreTest {
     private val bundled by lazy { KnowledgeStore.loadBundled() }
 
-    @Test fun byPackageFindsWechat() {
-        val e = KnowledgeStore(bundled).byPackage("com.tencent.mm")
-        assertNotNull(e); assertEquals("微信", e!!.display)
-        assertTrue(e.body!!.contains("联系人"))
+    @Test fun byPackageFindsWhatsapp() {
+        val e = KnowledgeStore(bundled).byPackage("com.whatsapp")
+        assertNotNull(e); assertEquals("WhatsApp", e!!.display)
+        assertTrue(e.body!!.contains("Contacts"))
     }
 
     @Test fun userNotesAppendedAndLabelled() {
-        val store = KnowledgeStore(bundled, mapOf("wechat" to "我的补充", "zhihu.com" to "网页补充"))
-        val body = store.byPackage("com.tencent.mm")!!.body!!
+        val store = KnowledgeStore(bundled, mapOf("whatsapp" to "我的补充", "zhihu.com" to "网页补充"))
+        val body = store.byPackage("com.whatsapp")!!.body!!
         assertTrue(body.startsWith("## 是什么"))
         assertTrue(body.endsWith("${KnowledgeStore.NOTES_HEADER}\n我的补充"))
         assertTrue(store.byDomain("www.zhihu.com")!!.body!!.endsWith("网页补充"))
@@ -46,17 +47,17 @@ class KnowledgeStoreTest {
 
     @Test fun loadNotesReadsAppsAndSites() {
         val dir = Files.createTempDirectory("personal").toFile()
-        java.io.File(dir, "apps/wechat").mkdirs(); java.io.File(dir, "apps/wechat/NOTES.md").writeText("  群聊先看置顶 \n")
+        java.io.File(dir, "apps/whatsapp").mkdirs(); java.io.File(dir, "apps/whatsapp/NOTES.md").writeText("  群聊先看置顶 \n")
         java.io.File(dir, "sites/zhihu.com").mkdirs(); java.io.File(dir, "sites/zhihu.com/NOTES.md").writeText("登录用扫码")
         java.io.File(dir, "apps/empty").mkdirs(); java.io.File(dir, "apps/empty/NOTES.md").writeText(" ")
         java.io.File(dir, "apps/none").mkdirs()
-        assertEquals(mapOf("wechat" to "群聊先看置顶", "zhihu.com" to "登录用扫码"), KnowledgeStore.loadNotes(dir))
+        assertEquals(mapOf("whatsapp" to "群聊先看置顶", "zhihu.com" to "登录用扫码"), KnowledgeStore.loadNotes(dir))
         assertTrue(KnowledgeStore.loadNotes(java.io.File(dir, "missing")).isEmpty())
     }
 
     @Test fun matchTaskByAlias() {
-        val hit = KnowledgeStore(bundled).matchTask("帮我在 weixin 上给小王发消息")
-        assertEquals("wechat", hit.first().name)
+        val hit = KnowledgeStore(bundled).matchTask("帮我在 whatsapp 上给小王发消息")
+        assertEquals("whatsapp", hit.first().name)
     }
 
     @Test fun matchTaskUsesWordBoundariesForAscii() {
@@ -74,7 +75,7 @@ class KnowledgeStoreTest {
     @Test fun packageForDisplayName() {
         val store = KnowledgeStore(bundled)
         assertEquals("com.xingin.xhs", store.packageFor("小红书"))
-        assertEquals("com.tencent.mm", store.packageFor("微信"))
+        assertEquals("com.whatsapp", store.packageFor("WhatsApp"))
         assertNull(store.packageFor("不存在的应用"))
     }
 
@@ -84,7 +85,7 @@ class KnowledgeStoreTest {
     }
 
     @Test fun handwrittenProfileBodyComesFirst() {
-        val body = KnowledgeStore(bundled).byPackage("com.tencent.mm")!!.body!!
+        val body = KnowledgeStore(bundled).byPackage("com.whatsapp")!!.body!!
         assertTrue(body.startsWith("## 是什么"))
         assertTrue(body.contains("## 界面"))
     }

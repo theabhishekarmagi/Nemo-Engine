@@ -1,3 +1,4 @@
+// Modified for Nemo-Engine by MAGI ABHISHEKAR (theabhishekarmagi), 2026-11-05.
 package com.wangzan101.mika.core.knowledge
 
 import com.wangzan101.mika.core.agent.FailKind
@@ -150,12 +151,12 @@ class AppKnowledgeLearningTest {
 
     @Test fun touchedAppsAreThoseActedIn() {
         val ev = events() + listOf(
-            RunEvent.ModelReply(80, 9, "", "phone_launch_app", """{"package":"com.tencent.mm"}""", null, null, null),
+            RunEvent.ModelReply(80, 9, "", "phone_launch_app", """{"package":"com.whatsapp"}""", null, null, null),
             RunEvent.ToolResult(81, 9, "phone_launch_app", """{"ok":true}""", true, null),
             RunEvent.ModelReply(82, 10, "", "phone_launch_app", """{"package":"com.unknown.app"}""", null, null, null),
             RunEvent.ToolResult(83, 10, "phone_launch_app", """{"ok":true}""", true, null),
         )
-        assertEquals(listOf("xianyu", "wechat"), AppKnowledgeDrafter.touched(ev, knownTools(), store).map { it.name })
+        assertEquals(listOf("xianyu", "whatsapp"), AppKnowledgeDrafter.touched(ev, knownTools(), store).map { it.name })
     }
 
     @Test fun lessonsNeedTwoBadTrialsInARow() {

@@ -1,3 +1,4 @@
+// Modified for Nemo-Engine by MAGI ABHISHEKAR (theabhishekarmagi), 2026-11-05.
 package com.wangzan101.mika.core.skills
 
 import com.wangzan101.mika.core.knowledge.PERSONAL_KIND
@@ -24,7 +25,7 @@ class GuideCatalogMergeTest {
         assertTrue(c.view("personal:xianyu") is GuideView.Found)
         assertEquals("skill_not_found", (c.view("app:xianyu") as GuideView.Failed).error)
         // 不影响别的内置技能
-        assertTrue(c.view("app:wechat") is GuideView.Found)
+        assertTrue(c.view("app:whatsapp") is GuideView.Found)
         assertEquals(bundled.items.size, c.items.size)
     }
 
