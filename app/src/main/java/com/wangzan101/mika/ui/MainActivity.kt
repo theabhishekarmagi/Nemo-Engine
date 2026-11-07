@@ -73,6 +73,11 @@ class MainActivity : ComponentActivity() {
         monitor.refresh()
     }
 
+    private val locationPermission = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
+        val access = (application as MikaApp).deviceLocation
+        access.completeConsent(access.hasPermission())
+    }
+
     // 安卓 12 及以前套上 App 里选的语言;13 起系统自己套
     override fun attachBaseContext(newBase: Context) {
         super.attachBaseContext(AppLanguage.wrap(newBase))
@@ -92,6 +97,22 @@ class MainActivity : ComponentActivity() {
                 // 在输入框外面点一下或拖动就收起键盘,全 App 统一
                 KeyboardDismissArea(Modifier.fillMaxSize()) {
                     MikaRoot(store, monitor, ::perform, requestedConversation) { requestedConversation = null }
+                    val location = (application as MikaApp).deviceLocation
+                    val request by location.consent.collectAsState()
+                    if (request != null && request?.awaitingSystem == false) {
+                        androidx.compose.material3.AlertDialog(
+                            onDismissRequest = { location.completeConsent(false) },
+                            title = { androidx.compose.material3.Text(androidx.compose.ui.res.stringResource(com.wangzan101.mika.R.string.location_permission_title)) },
+                            text = { androidx.compose.material3.Text(androidx.compose.ui.res.stringResource(com.wangzan101.mika.R.string.location_permission_body, androidx.compose.ui.res.stringResource(com.wangzan101.mika.R.string.app_name))) },
+                            confirmButton = { androidx.compose.material3.TextButton(onClick = {
+                                location.awaitingSystem()
+                                locationPermission.launch(arrayOf(Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.ACCESS_FINE_LOCATION))
+                            }) { androidx.compose.material3.Text(androidx.compose.ui.res.stringResource(com.wangzan101.mika.R.string.location_permission_continue)) } },
+                            dismissButton = { androidx.compose.material3.TextButton(onClick = { location.completeConsent(false) }) {
+                                androidx.compose.material3.Text(androidx.compose.ui.res.stringResource(com.wangzan101.mika.R.string.location_permission_not_now))
+                            } },
+                        )
+                    }
                 }
             }
         }
@@ -106,6 +127,7 @@ class MainActivity : ComponentActivity() {
     override fun onStart() {
         super.onStart()
         monitor.start()
+        (application as MikaApp).deviceLocation.foreground(true)
         // 每次打开都悄悄查一次新版本(两分钟内连着打开的只查一次),失败不吭声
         (application as MikaApp).updates.autoCheckInBackground()
         // 电脑连接开着、服务却不在(被系统停过、从后台没能起来):界面在前台时补起来
@@ -118,6 +140,7 @@ class MainActivity : ComponentActivity() {
     }
 
     override fun onStop() {
+        (application as MikaApp).deviceLocation.foreground(false, isChangingConfigurations)
         monitor.stop()
         super.onStop()
     }

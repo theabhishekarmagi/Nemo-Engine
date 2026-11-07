@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Nemo-Engine location permission flow, 2026-11-07. English-only distribution. -->
+<resources>
+    <string name="tool_current_location" translatable="false">Get current location</string>
+    <string name="location_permission_title" translatable="false">Use your location for this task?</string>
+    <string name="location_permission_body" translatable="false">%1$s uses your location to find nearby places. Coordinates will be sent to your selected AI provider and used in searches for this task. Approximate location works too. Your location is not tracked in the background.</string>
+    <string name="location_permission_continue" translatable="false">Continue</string>
+    <string name="location_permission_not_now" translatable="false">Not now</string>
+</resources>

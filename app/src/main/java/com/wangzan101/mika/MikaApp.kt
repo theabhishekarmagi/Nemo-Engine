@@ -292,6 +292,8 @@ class MikaApp : Application(), WebOwner, SandboxOwner, TaskEnvironment.Owner, Ph
         )
     }
 
+    val deviceLocation by lazy { com.wangzan101.mika.location.DeviceLocationAccess(this) }
+
     override fun onCreate() {
         super.onCreate()
         // 界面以外的文字(通知、服务、悬浮胶囊)按 App 语言取

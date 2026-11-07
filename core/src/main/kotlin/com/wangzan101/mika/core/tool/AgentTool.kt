@@ -33,7 +33,7 @@ enum class Verb {
     Wait, AskUser, RequestConfirmation, HandToUser, HandleObstacle, EndNotDone,
     KnowledgeSearch, KnowledgeRead, SkillSearch, SkillRead, SkillSave, MemorySearch, MemorySave, ProfileEdit, HistoryRead,
     ScheduleTask,
-    SpawnAgent, SettingsList, SettingsSet,
+    SpawnAgent, SettingsList, SettingsSet, GetCurrentLocation,
 }
 
 /** 按名字查得到的工具声明。 */
