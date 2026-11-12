@@ -26,7 +26,7 @@
     <string name="about_guide_sub">Getting started; add app knowledge even without coding</string>
     <string name="about_data_note">What you send Mika — messages, screen content and screenshots — goes only to the model provider you set up. Mika has no servers of its own and collects none of your data; checking for updates only contacts GitHub.</string>
     <string name="about_license_link">Apache-2.0 license</string>
-    <string name="about_author">Maintained by MAGI ABHISHEKAR · Updated 7 November 2026</string>
+    <string name="about_author">Maintained by MAGI ABHISHEKAR · Updated 13 November 2026</string>
     <string name="about_license_title">Apache-2.0 License</string>
     <string name="about_update_download">Download from GitHub</string>
     <string name="about_update_download_in_app">Download update</string>
