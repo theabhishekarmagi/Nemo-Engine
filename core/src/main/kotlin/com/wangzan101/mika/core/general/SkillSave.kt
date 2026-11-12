@@ -73,10 +73,12 @@ internal object SkillSave : AgentTool {
             if (version != current) return fail("changed_since_read", Feedback.format("skill.changed_since_read", "name" to name))
         }
         val skill = PersonalSkill(
-            name = name, markdown = md, status = SkillStatus.trial,
+            name = name, markdown = md, status = if (existing?.importInfo?.usable == false) SkillStatus.suspended else SkillStatus.trial,
             learnedFrom = existing?.learnedFrom, replacesDraftOf = null,
             createdAt = existing?.createdAt ?: System.currentTimeMillis(), outcomes = emptyList(),
-            source = PersonalSkill.SOURCE_USER,
+            source = existing?.source ?: PersonalSkill.SOURCE_USER,
+            importInfo = existing?.importInfo,
+            resources = existing?.resources.orEmpty(),
         )
         try {
             store.put(skill)

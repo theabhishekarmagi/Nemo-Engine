@@ -1,3 +1,5 @@
+Write all generated prose in English. Preserve exact app names, UI labels and identifiers where needed. Preserve verbatim user quotes in their original language. Do not copy the language of older notes.
+
 你替一个手机助手整理某个 App 的知识补充:一份只写事实的短清单,以后在这个 App 里办事时附在这个 App 的说明后面,让它少走弯路。你看不到手机,只根据下面给你的这次经过来写:App、这次的结局、目标、回答或没办成的原因、这个 App 现有的说明、已有的补充,以及这次在这个 App 里的动作清单(每一步点的是什么、在哪个 App、生效没有、画面变没变、出错码)。
 
 结局是下面三种之一:done 办成了;bumpy 办成了,但途中有出错、界面没变或来回返回的步骤;not_done 没办成或只办成一部分。

@@ -102,4 +102,35 @@ class PersonalSkillFilesTest {
         File(tmp.root, "skills/personal/lao-ma-msg/SKILL.md").delete()
         assertEquals("", files().get("lao-ma-msg")!!.markdown) // 技能目录据此报「坏了」
     }
+    @Test fun importedResourcesAndProvenanceSurviveRestartAndRestore() {
+        val info = com.wangzan101.mika.core.skills.SkillImportInfo(
+            "https://github.com/example/skills", "a".repeat(40), "skills/photo/SKILL.md",
+            com.wangzan101.mika.core.skills.ImportStatus.needs_setup,
+            listOf("Claude browser -> Mika browser"), listOf("Image API connection"))
+        val resources = mapOf(
+            "original/SKILL.md" to com.wangzan101.mika.core.skills.SkillResources.encode("source instructions".toByteArray()),
+            "upstream/LICENSE" to com.wangzan101.mika.core.skills.SkillResources.encode("copyright notice".toByteArray()),
+            "files/assets/template.bin" to com.wangzan101.mika.core.skills.SkillResources.encode(byteArrayOf(0, -1, 12)),
+        )
+        val imported = skill("import-photo").copy(importInfo = info, resources = resources, source = "imported", status = SkillStatus.suspended)
+        files().put(imported)
+        assertEquals(imported, files().get(imported.name))
+        val changed = imported.copy(markdown = imported.markdown + "\nNew revision", resources = resources - "files/assets/template.bin")
+        files().put(changed)
+        assertFalse(File(tmp.root, "skills/personal/import-photo/resources/files/assets/template.bin").exists())
+        assertTrue(files().restore(files().revisions(imported.name).first().id))
+        assertEquals(imported, files().get(imported.name))
+        assertEquals("copyright notice", File(tmp.root, "skills/personal/import-photo/resources/upstream/LICENSE").readText())
+    }
+
+    @Test fun importedResourcesCannotWriteOutsideSkillDirectory() {
+        for (path in listOf("../escape", "/tmp/escape", "a/../../escape", "a\\escape")) {
+            try {
+                files().put(skill("bad-import").copy(resources = mapOf(path to "eA==")))
+                org.junit.Assert.fail(path)
+            } catch (_: IllegalArgumentException) { }
+        }
+        assertFalse(File(tmp.root, "escape").exists())
+    }
+
 }

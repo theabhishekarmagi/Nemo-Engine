@@ -14,6 +14,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -21,6 +22,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
+import com.wangzan101.mika.core.skills.SkillEnglish
 import com.wangzan101.mika.core.knowledge.AppKnowledgeStage
 import com.wangzan101.mika.ui.components.ActionSheet
 import com.wangzan101.mika.ui.components.ButtonKind
@@ -55,6 +57,7 @@ internal fun SkillsSection(vm: MemoryViewModel, ui: SkillsUi, pending: Boolean) 
                     Column(Modifier.testTag("skill-row")) {
                         ListRow(null, d.display, d.description.ifBlank { null }, first = i == 0, onClick = { toggle(d.id) })
                         SkillBody(d, expanded = viewing == d.id)
+                        TranslationAction(vm, ui, d, pending = true)
                         RowActions {
                             MikaButton(stringResource(R.string.skills_accept_try), { vm.approveSkill(d.id) }, size = ButtonSize.Small)
                             MikaButton(stringResource(R.string.edit_it), { editing = d }, kind = ButtonKind.Tonal, size = ButtonSize.Small)
@@ -81,9 +84,10 @@ internal fun SkillsSection(vm: MemoryViewModel, ui: SkillsUi, pending: Boolean) 
                 val detail = listOfNotNull(stringResource(R.string.skills_user_created).takeIf { s.userCreated }, state, s.recent.takeIf { it.isNotEmpty() }?.let { stringResource(R.string.skills_recent, it.joinToString(" · ")) }).joinToString(" · ")
                 Column(Modifier.testTag("skill-row")) {
                     ListRow(null, s.display, s.description.ifBlank { null }, first = i == 0, detail = detail, onClick = { acting = s }) {
-                        MikaSwitch(!s.suspended, { on -> if (on) vm.restoreSkill(s.name) else vm.suspendSkill(s.name) })
+                        MikaSwitch(!s.suspended, { on -> if (on) vm.restoreSkill(s.name) else vm.suspendSkill(s.name) }, enabled = s.imported?.usable != false)
                     }
                     SkillBody(s, expanded = viewing == s.id)
+                    TranslationAction(vm, ui, s, pending = false)
                 }
             }
         }
@@ -142,7 +146,26 @@ private fun AppKnowledgeItem(vm: MemoryViewModel, row: AppKnowledgeRow, first: B
 
 /** 技能行下面:更新草稿改了哪几行,展开时再加全文。 */
 @Composable
-private fun SkillBody(r: SkillRow, expanded: Boolean) = ChangesAndText(r.changedLines, r.markdown, expanded)
+private fun SkillBody(r: SkillRow, expanded: Boolean) {
+    r.imported?.let { imported ->
+        val label = when (imported.status) {
+            com.wangzan101.mika.core.skills.ImportStatus.ready -> R.string.skill_import_ready
+            com.wangzan101.mika.core.skills.ImportStatus.adapted -> R.string.skill_import_adapted
+            com.wangzan101.mika.core.skills.ImportStatus.needs_setup -> R.string.skill_import_setup
+            com.wangzan101.mika.core.skills.ImportStatus.unsupported -> R.string.skill_import_unsupported
+        }
+        Column(Modifier.padding(horizontal = 16.dp, vertical = 6.dp)) {
+            Text(stringResource(label), style = MikaType.Hint, color = MikaTheme.colors.ink2)
+            if (!imported.usable) Text(imported.requirements.joinToString("\n").ifBlank { stringResource(R.string.skill_import_retry) }, style = MikaType.Hint, color = MikaTheme.colors.warn)
+            if (expanded) {
+                Text("${imported.repository}\n${imported.path} · ${imported.revision.take(12)}", style = MikaType.Hint, color = MikaTheme.colors.ink3)
+                imported.substitutions.forEach { Text(it, style = MikaType.Hint, color = MikaTheme.colors.ink2) }
+                if (!imported.usable) Text(stringResource(R.string.skill_import_retry), style = MikaType.Hint, color = MikaTheme.colors.ink3)
+            }
+        }
+    }
+    ChangesAndText(r.changedLines, r.markdown, expanded)
+}
 
 /** 一行下面:这份草稿改了哪几行([changed]),展开时再加全文。 */
 @Composable
@@ -155,5 +178,18 @@ private fun ChangesAndText(changed: List<String>, markdown: String, expanded: Bo
             changed.forEach { Text(it, style = MikaType.Hint, color = if (it.startsWith("+")) c.ok else c.bad) }
         }
         if (expanded) Text(markdown, Modifier.padding(top = 6.dp), style = MikaType.Hint, color = c.ink2)
+    }
+}
+
+@Composable
+private fun TranslationAction(vm: MemoryViewModel, ui: SkillsUi, row: SkillRow, pending: Boolean) {
+    if (!ui.canTranslate || !SkillEnglish.needsTranslation(row.markdown)) return
+    val state by vm.ui.collectAsState()
+    val busy = "${if (pending) "draft" else "skill"}:${row.id}" in state.translatingSkills
+    RowActions {
+        MikaButton(
+            stringResource(if (busy) R.string.skills_translating else R.string.skills_translate_english),
+            { vm.translateSkill(row.id, pending) }, enabled = !busy, kind = ButtonKind.Tonal, size = ButtonSize.Small,
+        )
     }
 }

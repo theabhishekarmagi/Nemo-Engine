@@ -122,7 +122,7 @@ class SkillSaveTest {
         assertEquals("missing_description", s.tools.call("skill_save", save(md().replace("description: 用户要点咖啡时用\n", ""))).s("error"))
         val noSection = s.tools.call("skill_save", save(md().replace("## 怎样算办成\n", "")))
         assertEquals("missing_section", noSection.s("error"))
-        assertTrue("## 怎样算办成" in noSection.s("message"))
+        assertTrue("## Verification" in noSection.s("message"))
         assertEquals("too_long", s.tools.call("skill_save", save(md(steps = "1. " + "很长".repeat(SkillDrafter.MAX_CHARS / 2)))).s("error"))
         assertEquals("unknown_tool", s.tools.call("skill_save", save(md(steps = "1. 用 `press_order_button` 下单"))).s("error"))
         assertTrue(s.store.list().isEmpty())

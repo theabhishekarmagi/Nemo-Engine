@@ -123,6 +123,14 @@ private suspend fun read(a: Args, ctx: ToolContext, among: Set<String>): ToolExe
     return when (val v = catalog.view(name, file, toolsNote(runner?.offered() == true), among)) {
         is GuideView.Failed -> fail(v.error, v.message)
         is GuideView.Found -> {
+            if (v.info.kind == PERSONAL_KIND) {
+                val imported = ctx.config.personalSkills?.get(v.info.name)?.importInfo
+                val missing = imported?.requiredTools.orEmpty().filter { name ->
+                    val tool = ctx.tools[name] as? AgentTool
+                    tool == null || !tool.available(ctx) || !tool.offered(ctx)
+                }
+                if (missing.isNotEmpty()) return fail("skill_needs_setup", "This imported skill needs unavailable tools: ${missing.joinToString()}. Re-import after setup; do not run it with silently missing steps.")
+            }
             // 能跑脚本时列出这一条带的脚本和此刻能不能跑;scriptSource 是跑脚本时 source 要填的值
             // 个人技能只有文字,不带脚本
             val dir = if (v.info.kind == PERSONAL_KIND) "" else catalog.scriptSource(v.info)

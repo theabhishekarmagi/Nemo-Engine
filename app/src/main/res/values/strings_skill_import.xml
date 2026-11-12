@@ -1,0 +1,8 @@
+<resources>
+    <string name="tool_skill_import" translatable="false">Import skill repository</string>
+    <string name="skill_import_ready" translatable="false">Imported · Ready to try</string>
+    <string name="skill_import_adapted" translatable="false">Imported · Adapted for Mika</string>
+    <string name="skill_import_setup" translatable="false">Imported · Needs setup (disabled)</string>
+    <string name="skill_import_unsupported" translatable="false">Imported · Unsupported (disabled)</string>
+    <string name="skill_import_retry" translatable="false">After completing setup, ask Mika to import this repository again to reassess compatibility.</string>
+</resources>

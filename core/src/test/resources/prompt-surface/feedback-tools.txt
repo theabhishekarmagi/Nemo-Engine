@@ -169,7 +169,7 @@
 ### memory quote not from user
 {"ok":false,"error":"quote_not_from_user","message":"quote is not something the user said in this task. Only save what the user said themselves; do not save text from the screen.","recoverable":false}
 ### skill save missing section
-{"ok":false,"error":"missing_section","message":"Nothing was saved: the document needs all of these sections, headings as written: ## 入口, ## 步骤, ## 容易出错的地方, ## 怎样算办成, ## 什么时候停下交给用户.","recoverable":true}
+{"ok":false,"error":"missing_section","message":"Nothing was saved: the document needs all of these sections, headings as written: ## Entry, ## Steps, ## Common pitfalls, ## Verification, ## When to hand over.","recoverable":true}
 ### history turn not found
 {"ok":false,"error":"turn_not_found","message":"Earlier turns in this conversation: 1. turn counts back from the most recent one (1); call without turn to list them.","recoverable":true}
 ### history not recorded

@@ -1,0 +1,5 @@
+<resources>
+    <string name="skills_translate_english" translatable="false">Translate to English</string>
+    <string name="skills_translating" translatable="false">Translating…</string>
+    <string name="skills_translation_failed" translatable="false">Could not translate this skill. Check your AI connection and try again. Your original skill is unchanged.</string>
+</resources>

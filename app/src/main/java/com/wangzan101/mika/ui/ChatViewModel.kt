@@ -1363,6 +1363,7 @@ class ToolLabels(private val tools: ToolIndex, private val legacy: LegacyNames =
         /** 工具声明里的 label → 界面文字;中文资源与 label 一字不差(ToolLabelsTest 核对每个工具都有)。 */
         val TOOL_LABELS: Map<String, Int> = mapOf(
             "Get current location" to R.string.tool_current_location,
+            "Import skill repository" to R.string.tool_skill_import,
             "查看已装的 App" to R.string.tool_list_apps,
             "打开 App" to R.string.tool_open_app,
             "分享文字到 App" to R.string.tool_share_text,

@@ -413,6 +413,11 @@ private fun MikaRoot(store: ProviderStore, monitor: SystemStatusMonitor, activit
                         onForgotten = { id -> memoryRuntime.scope.launch(Dispatchers.IO) { memoryRuntime.stripMemory(setOf(id)) } },
                         runnableScripts = GuideCatalog.loadBundled().runnableScripts(),
                         appDrafts = memoryRuntime.appKnowledge(),
+                        translateSkill = { markdown ->
+                            val model = store.modelFor(com.wangzan101.mika.core.model.ModelRole.Light)
+                                ?: store.modelFor(com.wangzan101.mika.core.model.ModelRole.Main)
+                            model?.let { com.wangzan101.mika.core.skills.SkillEnglish.translate(it, markdown) }
+                        },
                     )
                 }
             }

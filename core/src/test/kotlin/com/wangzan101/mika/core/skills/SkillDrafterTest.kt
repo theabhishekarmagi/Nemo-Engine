@@ -127,7 +127,7 @@ class SkillDrafterTest {
         val d = draft(text(md())) as DraftResult.Draft
         assertFalse(d.skill.markdown.contains("老妈"))
         assertFalse(d.skill.markdown.contains("明天回家吃饭"))
-        assertTrue(d.skill.markdown.contains("输入 <参数>\n2. 输入 <参数> 后点发送"))
+        assertTrue(d.skill.markdown.contains("输入 <parameter>\n2. 输入 <parameter> 后点发送"))
         assertEquals(SkillStatus.pending, d.skill.status)
         assertEquals("r1", d.skill.learnedFrom)
         assertNull(d.isUpdateOf)
@@ -141,7 +141,7 @@ class SkillDrafterTest {
         assertFalse(request.contains("晚上一起吃饭"))
         assertFalse(request.contains("老妈"))
         assertFalse(request.contains("明天回家吃饭"))
-        assertTrue(request.contains("目标:给『<参数>』发『<参数>』"))
+        assertTrue(request.contains("目标:给『<parameter>』发『<parameter>』"))
         assertTrue(request.contains("<输入内容>"))
         assertTrue(request.contains("tap 「搜索」"))
         assertTrue(model.offeredTools.single().isEmpty())

@@ -1,3 +1,5 @@
+Write all generated prose in English. Preserve exact app names, UI labels and identifiers where needed. Preserve verbatim user quotes in their original language. Do not copy the language of older notes.
+
 你替一个手机助手整理「以后还用得上的、关于用户本人的事」。你只看到用户在这次任务里亲口说的话(逐条编号)和与之相关的已有记忆(带编号),看不到手机屏幕。
 
 只输出一个 JSON 对象,不要输出其他文字:

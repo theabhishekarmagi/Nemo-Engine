@@ -21,6 +21,8 @@ data class PersonalSkill(
     val baseHash: String? = null,
     /** 从哪儿来的:[SOURCE_USER] 是用户在任务里要求写下的(`skill_save`);为 null 是从办成的任务里沉淀的。 */
     val source: String? = null,
+    val importInfo: SkillImportInfo? = null,
+    val resources: Map<String, String> = emptyMap(),
 ) {
     val createdByUser: Boolean get() = source == SOURCE_USER
 

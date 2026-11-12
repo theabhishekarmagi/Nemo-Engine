@@ -286,7 +286,10 @@ class SkillDrafter(private val model: ChatModel) {
             if (name == null || !PersonalSkills.NAME.matches(name)) return "invalid_name"
             if ((meta["description"] as? String).isNullOrBlank()) return "missing_description"
             val headings = body.lines().filter { it.startsWith("## ") }
-            if (SECTIONS.any { s -> headings.none { it.removePrefix("## ").trim().startsWith(s) } }) return "missing_section"
+            if (SECTIONS.indices.any { i -> headings.none {
+                val title = it.removePrefix("## ").trim()
+                title.startsWith(SECTIONS[i], ignoreCase = true) || title.startsWith(LEGACY_SECTIONS[i])
+            } }) return "missing_section"
             if (md.length > MAX_CHARS) return "too_long"
             if (TOOL_MENTION.findAll(md).any { it.groupValues[1] !in toolNames }) return "unknown_tool"
             if (scriptTool != null && TOOL_MENTION.findAll(md).any { it.groupValues[1] == scriptTool }) {
@@ -297,7 +300,9 @@ class SkillDrafter(private val model: ChatModel) {
             if (SensitiveFilter.hit(md) != null) return "sensitive"
             return null
         }
-        val SECTIONS = listOf("入口", "步骤", "容易出错的地方", "怎样算办成", "什么时候停下交给用户")
+        val SECTIONS = listOf("Entry", "Steps", "Common pitfalls", "Verification", "When to hand over")
+        // Existing on-device skills remain editable and usable after the language update.
+        private val LEGACY_SECTIONS = listOf("入口", "步骤", "容易出错的地方", "怎样算办成", "什么时候停下交给用户")
         /** 反引号里形如工具名的标识符。 */
         private val TOOL_MENTION = Regex("`([a-z][a-z0-9_]*)`")
         /** 文中的技能脚本路径,如 `scripts/extract_pdf.py` 或 `skills/documents/scripts/extract_pdf.py`。 */

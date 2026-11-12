@@ -10,6 +10,7 @@ import com.wangzan101.mika.core.memory.MemorySource
 import com.wangzan101.mika.core.memory.MemoryStatus
 import com.wangzan101.mika.core.memory.MemoryStore
 import com.wangzan101.mika.core.knowledge.FrontMatter
+import com.wangzan101.mika.core.skills.SkillEnglish
 import com.wangzan101.mika.core.skills.SkillDrafter
 import com.wangzan101.mika.core.assembly.knownToolNames
 import com.wangzan101.mika.core.skills.PersonalSkill
@@ -22,6 +23,12 @@ import com.wangzan101.mika.core.knowledge.AppKnowledgeTrial
 import com.wangzan101.mika.settings.MemorySettings
 import com.wangzan101.mika.settings.MemorySwitches
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -55,6 +62,7 @@ data class MemoryUi(
     val message: String? = null,
     val clearStage: Int = 0,
     val skills: SkillsUi = SkillsUi(),
+    val translatingSkills: Set<String> = emptySet(),
 ) {
     /** 「待确认」段的条数:待批准的记忆 + 技能草稿 + 还没收下的 App 知识草稿。 */
     val pendingCount: Int get() = pending.size + skills.drafts.size + skills.appKnowledge.count { it.stage == AppKnowledgeStage.Draft }
@@ -68,7 +76,7 @@ class MemoryViewModel(
     private val store: MemoryStore,
     private val settings: MemorySettings,
     private val skills: PersonalSkills?,
-    scope: CoroutineScope,
+    private val scope: CoroutineScope,
     brokenNotice: StateFlow<String?> = MutableStateFlow(null),
     /** 全部清除:记忆文件、坏文件另存、个人技能都删掉并重建密钥。 */
     private val wipe: () -> Unit = { store.clearAll() },
@@ -82,6 +90,8 @@ class MemoryViewModel(
     /** 收下改过的技能时:提到跑脚本的工具的,脚本得是清单里标为可运行的。 */
     private val runnableScripts: Set<String> = emptySet(),
     private val appDrafts: AppKnowledgeDraftStore? = null,
+    private val translateSkill: (suspend (String) -> String?)? = null,
+    private val translationDispatcher: CoroutineDispatcher = Dispatchers.IO,
 ) {
     private val local = MutableStateFlow(MemoryUi())
     private val skillsVersion = MutableStateFlow(0)
@@ -143,7 +153,7 @@ class MemoryViewModel(
     private fun row(m: MemoryItem) = Row(m.id, m.kind, m.content, m.keywords, sourceLine(m.source), m.pinned, m.status == MemoryStatus.pending, m.replaces)
 
     // ---- 技能分段 ----
-    private fun skillsUi(): SkillsUi = skills?.let { SkillsUi.of(it, appDrafts) } ?: SkillsUi()
+    private fun skillsUi(): SkillsUi = skills?.let { SkillsUi.of(it, appDrafts).copy(canTranslate = translateSkill != null) } ?: SkillsUi()
     private fun skillsChanged() = skillsVersion.update { it + 1 }
 
     /** 收下草稿;[edited] 是用户改过的全文,和起草出来的一样要过格式与安全校验,不过就不收并说明。 */
@@ -160,6 +170,44 @@ class MemoryViewModel(
         skillsChanged()
     }
 
+    /** Converts only on explicit request, leaving stale or failed translations untouched. */
+    fun translateSkill(id: String, pending: Boolean) {
+        val p = skills ?: return
+        val translator = translateSkill ?: return
+        val key = "${if (pending) "draft" else "skill"}:$id"
+        if (key in local.value.translatingSkills) return
+        val original = if (pending) p.drafts()[id] else p.get(id)
+        original ?: return
+        local.update { it.copy(translatingSkills = it.translatingSkills + key) }
+        scope.launch {
+            try {
+                val translated = withContext(translationDispatcher) {
+                    withTimeoutOrNull(45_000) { translator(original.markdown) }
+                }
+                if (translated == null || SkillDrafter.validate(translated, toolNames, scriptTool, runnableScripts) != null) {
+                    local.update { it.copy(message = tr(R.string.skills_translation_failed)) }
+                } else {
+                    // A concurrent edit, approval or deletion must never be overwritten by an old response.
+                    val current = if (pending) p.drafts()[id] else p.get(id)
+                    if (current != original) {
+                        local.update { it.copy(message = tr(R.string.skill_changed)) }
+                    } else if (pending) {
+                        p.putPending(id, original.copy(markdown = translated))
+                    } else {
+                        p.update(id) { if (it == original) it.copy(markdown = translated) else it }
+                    }
+                    skillsChanged()
+                }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (_: Exception) {
+                local.update { it.copy(message = tr(R.string.skills_translation_failed)) }
+            } finally {
+                local.update { it.copy(translatingSkills = it.translatingSkills - key) }
+            }
+        }
+    }
+
     fun rejectSkill(draftId: String) { skills?.reject(draftId); skillsChanged() }
 
     fun approveAppDraft(id: String) { appDrafts?.approve(id); skillsChanged() }
@@ -169,7 +217,7 @@ class MemoryViewModel(
 
     /** 恢复时清掉旧结果,免得下一次一不顺又马上被停用。 */
     fun restoreSkill(name: String) = changeSkill(name) {
-        it.copy(status = it.restoredStatus(), outcomes = emptyList())
+        if (it.importInfo?.usable == false || it.source == "imported" && it.importInfo == null) it else it.copy(status = it.restoredStatus(), outcomes = emptyList())
     }
 
     fun deleteSkill(name: String) { skills?.remove(name); skillsChanged() }
@@ -217,7 +265,7 @@ data class AppKnowledgeRow(val id: String, val name: String, val markdown: Strin
 /** 技能分段的内容:待收下的草稿和已收下的个人技能(在用的在前)。 */
 
 data class SkillsUi(val drafts: List<SkillRow> = emptyList(), val installed: List<SkillRow> = emptyList(),
-    val appKnowledge: List<AppKnowledgeRow> = emptyList()) {
+    val appKnowledge: List<AppKnowledgeRow> = emptyList(), val canTranslate: Boolean = false) {
     companion object {
         fun of(skills: PersonalSkills, appDrafts: AppKnowledgeDraftStore? = null): SkillsUi {
             val installed = skills.list()
@@ -244,6 +292,7 @@ data class SkillsUi(val drafts: List<SkillRow> = emptyList(), val installed: Lis
                 canRestore = skills?.revisions(s.name)?.isNotEmpty() == true,
                 recent = s.outcomes.takeLast(3).map(::outcomeLabel),
                 userCreated = s.createdByUser,
+                imported = s.importInfo,
             )
         }
 
@@ -270,4 +319,5 @@ data class SkillRow(
     val recent: List<String> = emptyList(), val changedLines: List<String> = emptyList(),
     /** 用户在任务里要求写下的(不是从办成的任务里学来的)。 */
     val userCreated: Boolean = false,
+    val imported: com.wangzan101.mika.core.skills.SkillImportInfo? = null,
 )

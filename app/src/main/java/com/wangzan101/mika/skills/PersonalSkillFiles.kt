@@ -1,5 +1,7 @@
 package com.wangzan101.mika.skills
 
+import com.wangzan101.mika.core.skills.SkillImportInfo
+import com.wangzan101.mika.core.skills.SkillResources
 import com.wangzan101.mika.core.skills.PersonalSkill
 import com.wangzan101.mika.core.skills.PersonalSkills
 import com.wangzan101.mika.core.skills.SkillStatus
@@ -161,11 +163,25 @@ class PersonalSkillFiles(dir: File) : PersonalSkills {
             outcomes = (meta?.get("outcomes") as? JsonArray)?.mapNotNull { (it as? JsonPrimitive)?.contentOrNull } ?: emptyList(),
             baseHash = str("baseHash"),
             source = str("source"),
+            importInfo = meta?.get("importInfo")?.let { runCatching { SkillImportInfo.json.decodeFromString<SkillImportInfo>(it.toString()) }.getOrNull() },
+            resources = (meta?.get("resourceFiles") as? JsonArray)?.mapNotNull { (it as? JsonPrimitive)?.contentOrNull }
+                .orEmpty().take(SkillResources.MAX_FILES).filter(SkillResources::safe).associateWith { path ->
+                    val file = File(File(d, "resources"), path)
+                    if (file.isFile && file.length() <= SkillResources.MAX_BYTES) SkillResources.encode(file.readBytes()) else ""
+                },
         )
     }
 
     private fun write(d: File, s: PersonalSkill) {
+        require(s.resources.size <= SkillResources.MAX_FILES && s.resources.keys.all(SkillResources::safe)) { "invalid skill resources" }
+        val bytes = s.resources.mapValues { SkillResources.decode(it.value) }
+        require(bytes.values.sumOf { it.size.toLong() } <= SkillResources.MAX_BYTES) { "skill resources too large" }
         d.mkdirs()
+        val resourceDir = File(d, "resources")
+        if (resourceDir.exists()) resourceDir.deleteRecursively()
+        bytes.forEach { (path, value) ->
+            File(resourceDir, path).also { it.parentFile?.mkdirs() }.writeBytes(value)
+        }
         val meta = buildJsonObject {
             put("name", s.name)
             put("status", s.status.name)
@@ -175,6 +191,8 @@ class PersonalSkillFiles(dir: File) : PersonalSkills {
             put("outcomes", JsonArray(s.outcomes.map(::JsonPrimitive)))
             s.baseHash?.let { put("baseHash", it) }
             s.source?.let { put("source", it) }
+            s.importInfo?.let { put("importInfo", SkillImportInfo.json.encodeToJsonElement(SkillImportInfo.serializer(), it)) }
+            if (s.resources.isNotEmpty()) put("resourceFiles", JsonArray(s.resources.keys.sorted().map(::JsonPrimitive)))
         }
         atomicWrite(File(d, SKILL_FILE), s.markdown)
         atomicWrite(File(d, META), meta.toString())

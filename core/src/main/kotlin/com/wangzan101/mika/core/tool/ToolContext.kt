@@ -45,6 +45,7 @@ internal class ToolConfig(
     /** 存下的运行记录;给了、而这个对话之前有记过运行的轮次时提供 history_read。 */
     val runRecords: com.wangzan101.mika.core.record.RunRecords? = null,
     val deviceLocation: com.wangzan101.mika.core.general.DeviceLocation? = null,
+    val skillImports: com.wangzan101.mika.core.skills.SkillImports? = null,
 )
 
 /**
@@ -74,6 +75,7 @@ internal class ToolContext(
     var appOpened = false
     /** 本次调用的编号;页面脚本里的动作按它编号。 */
     var callId = ""
+    val skillImportPlans = mutableMapOf<String, String>()
     /** 自己不动界面的工具(页面脚本)里的动作经它回到执行入口;只读调用、测试里不给时里面的动作一律不做。 */
     var sub: SubActions? = null
     /** 本次调用所在的轮次(循环的「第 N 步」)。 */
